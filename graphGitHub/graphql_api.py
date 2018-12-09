@@ -18,6 +18,9 @@ def fetch_data(github_user_name,
 
     remaining = 5000
     lastCursor = first_page_cursor
+    if lastCursor is not None:
+        print("Starting from " + lastCursor)
+
     if not os.path.isdir(os.path.join(results_folder, "graphql")):
         os.mkdir(os.path.join(results_folder, "graphql"))
 
@@ -41,7 +44,7 @@ def fetch_data(github_user_name,
                                                                 "totalCount nodes{"
                                                                     "stargazers{totalCount}"
                                                                     "primaryLanguage{name}"
-                                                                    "id name}}}}}}}\"}",
+                                                                    "id name}}}}cursor}}}\"}",
                                              auth=(github_user_name, oauth_password))
                     else:
                         users = requests.post(entry_point,
@@ -57,17 +60,25 @@ def fetch_data(github_user_name,
                                                       "totalCount nodes{"
                                                       "stargazers{totalCount}"
                                                       "primaryLanguage{name}"
-                                                      "id name}}}}}}}\"}",
+                                                      "id name}}}}cursor}}}\"}",
                                               auth=(github_user_name, oauth_password))
                     if users.status_code == 200:
                         repos_json = users.json()
                         remaining = repos_json["data"]["rateLimit"]["remaining"]
-                        lastCursor = repos_json["data"]["search"]["pageInfo"]["endCursor"]
-                        cursors_file.write(lastCursor + "\n")
+                        # lastCursor = repos_json["data"]["search"]["pageInfo"]["endCursor"]
+                        # if lastCursor is not None:
+                        #     cursors_file.write(lastCursor + "\n")
+                        # else:
+                        #     raise ValueError("None cursor!")
 
                         if len(repos_json) > 0:
                             for entry in repos_json["data"]["search"]["edges"]:
-                                raw_data.write(json.dumps(entry) + "\n")
+                                raw_data.write(json.dumps(entry["node"]) + "\n")
+                                lastCursor = entry["cursor"]
+                                if lastCursor is not None:
+                                    cursors_file.write(lastCursor + "\n")
+                                else:
+                                    raise ValueError("None cursor!")
                         fetched_users += users_by_query
                         print(str(fetched_users) + " users fetched.")
                     else:
@@ -114,9 +125,9 @@ def graphql2csv(results_folder):
                 print(graphql_data)
                 for data in graphql_data:
                     # User data
-                    user_id = data["node"]["id"]
-                    users_file.write(str(user_id) + "," + str(data["node"]["name"] + "\n"))
-                    for repository in data["node"]["repositoriesContributedTo"]["nodes"]:
+                    user_id = data["id"]
+                    users_file.write(str(user_id) + "," + str(data["name"] + "\n"))
+                    for repository in data["repositoriesContributedTo"]["nodes"]:
                         rep_id = repository["id"]
                         if rep_id not in registered_repositories:
 
