@@ -154,8 +154,12 @@ def get_last_fetched_page(results_folder="results"):
         with open(os.path.join(results_folder, "graphql", "page_cursors.txt")) as page_file:
             pages = page_file.readlines()
             # Removes \n end character
-            page_cursor = pages[-1][0:-1]
-            return page_cursor
+            try:
+                page_cursor = pages[-1][0:-1]
+                return page_cursor
+            except IndexError:
+                return None
     except FileNotFoundError as e:
         print(e)
         print("graphql/page_cursor.txt doesn't seem to exist in the specified results_folder.")
+        raise

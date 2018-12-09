@@ -60,10 +60,14 @@ def get_last_fetched_repository(results_folder):
             repositories = csv.DictReader(page_file, fieldnames=("id", "full_name"))
 
             # Removes \n end character
-            return repositories[-1]["id"]
+            try:
+                return repositories[-1]["id"]
+            except IndexError:
+                return None
+
     except FileNotFoundError as e:
-        print(e)
         print("graphql/page_cursor.txt doesn't seem to exist in the specified results_folder.")
+        raise
 
 
 def fetch_data(github_user_name,
