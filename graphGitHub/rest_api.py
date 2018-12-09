@@ -16,29 +16,54 @@ def fetch_repositories(github_user_name,
 
     if not os.path.isdir(os.path.join(results_folder, "rest")):
         os.mkdir(os.path.join(results_folder, "rest"))
-    repositories_file = open(os.path.join(results_folder, "rest", "repositories.csv", "a+"))
+    repositories_file = open(os.path.join(results_folder, "rest", "repositories.csv"), "a+")
 
     while fetched_repositories < total_repositories:
         rate_limit = requests.get(entry_point + "rate_limit",
                              auth=(github_user_name, oauth_password))
-        remaining = int(rate_limit.json()["rate"]["remaining"])
-        print("Remaining : " + str(remaining))
+        if rate_limit.status_code == 200:
+            remaining = int(rate_limit.json()["rate"]["remaining"])
+            print("Remaining : " + str(remaining))
+        else:
+            print("Rate limit request failed. error : " + str(rate_limit.status_code))
+            if rate_limit.status_code == 401:
+                print("You should check yout GitHub oauth token.")
+                return
+            print("Let's assume remaining is ok.")
+            remaining = 5000
 
         if remaining > 100:
             repos = requests.get(entry_point + "repositories",
                                  {"since": str(last_id)},
                                  auth=(github_user_name, oauth_password))
 
-            repos_json = repos.json()
-            if len(repos_json) > 0:
-                for repo in repos_json:
-                    repositories_file.write(str(repo["id"]) + "," + repo["full_name"] + "\n")
-                last_id = repos_json[-1]["id"]
-                fetched_repositories += len(repos_json)
-            print(str(fetched_repositories) + " repositories fetched.")
+            if repos.status_code == 200:
+                repos_json = repos.json()
+                if len(repos_json) > 0:
+                    for repo in repos_json:
+                        repositories_file.write(str(repo["id"]) + "," + repo["full_name"] + "\n")
+                    last_id = repos_json[-1]["id"]
+                    fetched_repositories += len(repos_json)
+                print(str(fetched_repositories) + " repositories fetched.")
+            else:
+                print("Request failed. error : " + str(repos.status_code))
+                if repos.status_code == 401:
+                    print("You should check yout GitHub oauth token.")
         else:
             print("Waiting...")
             time.sleep(60)
+
+
+def get_last_fetched_repository(results_folder):
+    try:
+        with open(os.path.join(results_folder, "rest", "repositories.csv")) as page_file:
+            repositories = csv.DictReader(page_file, fieldnames=("id", "full_name"))
+
+            # Removes \n end character
+            return repositories[-1]["id"]
+    except FileNotFoundError as e:
+        print(e)
+        print("graphql/page_cursor.txt doesn't seem to exist in the specified results_folder.")
 
 
 def fetch_data(github_user_name,
@@ -52,9 +77,9 @@ def fetch_data(github_user_name,
               "Maybe you forgot to call fetch_repositories before this function.")
         return
 
-    registered_users = read_users()
+    registered_users = read_users(results_folder)
     contributions_files = open(os.path.join(results_folder, "rest", "contributions.csv"), "a+")
-    users_file = open(os.path.join(results_folder, "results", "users.csv"), "a+")
+    users_file = open(os.path.join(results_folder, "rest", "users.csv"), "a+")
 
     repositories = csv.DictReader(csv_repositories, fieldnames=("id", "full_name"), delimiter=",")
     i = 0
@@ -93,7 +118,23 @@ def fetch_data(github_user_name,
                     contributions_files.write(repo["id"] + "," + user_id + "," + str(contributor["contributions"]) + "\n")
                     contributions_count += 1
 
+            else:
+                print("Request failed. error : " + str(response.status_code))
+                if response.status_code == 401:
+                    print("You should check yout GitHub oauth token.")
+
             print(str(i) + " processed repositories. (" + str(contributions_count) + " contributions)")
+
+
+def get_last_repository_data_fetched(results_folder):
+    try:
+        with open(os.path.join(results_folder, "rest", "contributions.csv")) as page_file:
+            repositories = csv.DictReader(page_file, fieldnames=("id_folder", "id_user", "contributions"))
+            # Removes \n end character
+            return repositories[-1]["id_folder"]
+    except FileNotFoundError as e:
+        print(e)
+        print("rest/contributions.csv doesn't seem to exist in the specified results_folder.")
 
 
 def read_users(results_folder):
