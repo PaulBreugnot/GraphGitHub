@@ -42,7 +42,7 @@ def fetch_data(github_user_name,
                                                                     "stargazers{totalCount}"
                                                                     "primaryLanguage{name}"
                                                                     "id name}}}}}}}\"}",
-                                             auth=('PaulBreugnot', 'e89d03e1cf7b766a2c10e50170edae5c3774af8d'))
+                                             auth=(github_user_name, oauth_password))
                     else:
                         users = requests.post(entry_point,
                                               data="{\"query\":"
@@ -58,7 +58,7 @@ def fetch_data(github_user_name,
                                                       "stargazers{totalCount}"
                                                       "primaryLanguage{name}"
                                                       "id name}}}}}}}\"}",
-                                              auth=('PaulBreugnot', 'e89d03e1cf7b766a2c10e50170edae5c3774af8d'))
+                                              auth=(github_user_name, oauth_password))
                     if users.status_code == 200:
                         repos_json = users.json()
                         remaining = repos_json["data"]["rateLimit"]["remaining"]
@@ -70,6 +70,10 @@ def fetch_data(github_user_name,
                                 raw_data.write(json.dumps(entry) + "\n")
                         fetched_users += users_by_query
                         print(str(fetched_users) + " users fetched.")
+                    else:
+                        print("Request failed. error : " + str(users.status_code))
+                        if users.status_code == 401:
+                            print("You should check yout GitHub oauth token.")
                 else:
                     print("Waiting...")
                     time.sleep(60)
@@ -81,8 +85,11 @@ def fetch_data(github_user_name,
 
 def raw2json(source_file_path, destination_file_path):
     with open(source_file_path, "r") as raw_data:
-        with open(destination_file_path, "w+") as json_data:
-            json_data.write(json.dumps(raw_data.readlines()))
+        with open(destination_file_path, "w+") as json_file:
+            json_data = []
+            for line in raw_data.readlines():
+                json_data.append(json.loads(line))
+            json_file.write(json.dumps(json_data))
 
 
 def graphql2csv(results_folder):
@@ -90,11 +97,12 @@ def graphql2csv(results_folder):
     registered_repositories = []
 
     try:
-        with open(os.path.join(results_folder, "graphql", "graphql.json"), "r") as data_file:
+        with open(os.path.join(results_folder, "graphql", "data.json"), "r") as data_file:
             graphql_data = json.loads(data_file.read())
-    except FileNotFoundError:
-        print("graphql/graphql.json doesn't seem to exist in the specified results_folder."
-              "Maybe you forgot to call fetch_data before this function.")
+    except FileNotFoundError as e:
+        print(e)
+        print("graphql/data.json doesn't seem to exist in the specified results_folder."
+              " Maybe you forgot to call fetch_data before this function.")
         return
 
     with open(os.path.join(results_folder, "graphql", "repositories.csv"), "w+") as repositories_file:
@@ -103,10 +111,11 @@ def graphql2csv(results_folder):
                 processed_users = 0
                 contributions_count = 0
                 print("Processing " + str(len(graphql_data)) + " nodes...")
+                print(graphql_data)
                 for data in graphql_data:
                     # User data
                     user_id = data["node"]["id"]
-                    users_file.write(str(user_id) + "," + str(data["node"]["name"]))
+                    users_file.write(str(user_id) + "," + str(data["node"]["name"] + "\n"))
                     for repository in data["node"]["repositoriesContributedTo"]["nodes"]:
                         rep_id = repository["id"]
                         if rep_id not in registered_repositories:
@@ -138,3 +147,15 @@ def graphql2csv(results_folder):
                 print(str(processed_users) + " users, "
                       + str(len(registered_repositories)) + " repositories and "
                       + str(contributions_count) + " contributions found.")
+
+
+def get_last_fetched_page(results_folder="results"):
+    try:
+        with open(os.path.join(results_folder, "graphql", "page_cursors.txt")) as page_file:
+            pages = page_file.readlines()
+            # Removes \n end character
+            page_cursor = pages[-1][0:-1]
+            return page_cursor
+    except FileNotFoundError as e:
+        print(e)
+        print("graphql/page_cursor.txt doesn't seem to exist in the specified results_folder.")
