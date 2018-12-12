@@ -4,7 +4,7 @@ query listContributions {
   remaining
   resetAt
  }
- search(query:"created:>2008-04-10", type:USER, first:20, after:"Y3Vyc29yOjEw"){
+ search(query:"type:user", type:USER, first:20, after:"Y3Vyc29yOjEw"){
   userCount
   pageInfo {
   	endCursor

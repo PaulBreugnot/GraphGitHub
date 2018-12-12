@@ -61,7 +61,10 @@ def get_last_fetched_repository(results_folder):
 
             # Removes \n end character
             try:
-                return repositories[-1]["id"]
+                last_id = None
+                for rep in repositories:
+                    last_id = rep["id"]
+                return last_id
             except IndexError:
                 return None
 
@@ -91,7 +94,7 @@ def fetch_data(github_user_name,
 
     for repo in repositories:
         i += 1
-        if int(repo["id"]) > begin_to_repo:
+        if int(repo["id"]) > int(begin_to_repo):
             rate_limit = requests.get(entry_point + "rate_limit",
                                       auth=(github_user_name, oauth_password))
             remaining = int(rate_limit.json()["rate"]["remaining"])
@@ -125,7 +128,7 @@ def fetch_data(github_user_name,
             else:
                 print("Request failed. error : " + str(response.status_code))
                 if response.status_code == 401:
-                    print("You should check yout GitHub oauth token.")
+                    print("You should check your GitHub oauth token.")
 
             print(str(i) + " processed repositories. (" + str(contributions_count) + " contributions)")
 
@@ -135,7 +138,10 @@ def get_last_repository_data_fetched(results_folder):
         with open(os.path.join(results_folder, "rest", "contributions.csv")) as page_file:
             repositories = csv.DictReader(page_file, fieldnames=("id_folder", "id_user", "contributions"))
             # Removes \n end character
-            return repositories[-1]["id_folder"]
+            last_id = None
+            for rep in repositories:
+                last_id = rep["id_folder"]
+            return last_id
     except FileNotFoundError as e:
         print(e)
         print("rest/contributions.csv doesn't seem to exist in the specified results_folder.")
@@ -144,7 +150,7 @@ def get_last_repository_data_fetched(results_folder):
 def read_users(results_folder):
     user_ids = []
     try:
-        with open(os.path.join(results_folder, "rest", "users.csv", "r")) as users_file:
+        with open(os.path.join(results_folder, "rest", "users.csv"), "r") as users_file:
             users_csv = csv.DictReader(users_file, fieldnames=("id", "login"), delimiter=",")
             for user in users_csv:
                 user_ids.append(user["id"])
@@ -153,5 +159,62 @@ def read_users(results_folder):
     except FileNotFoundError:
         return []
 
+
+def raw2gephi(user_file, repositories_file, contributions_file, destination_folder):
+    """
+
+    :return:
+    """
+
+    new_user_ids = {}
+    new_users = []
+    with open(user_file, "r") as users_data:
+        print("Reading users...")
+        users = csv.DictReader(users_data, fieldnames=("id", "login"), delimiter=",")
+        # Generating new user ids
+        new_id = 0
+        for user in users:
+            new_users.append((new_id, user["login"]))
+            new_user_ids[user["id"]] = new_id
+            new_id += 1
+
+    new_repositories_ids = {}
+    new_repositories = []
+    with open(repositories_file, "r") as repositories_data:
+        print("Reading repositories...")
+        repositories = csv.DictReader(repositories_data, fieldnames=("id", "full_name"), delimiter=",")
+        # Generating new repositories ids
+        for repository in repositories:
+            new_repositories.append((new_id, repository["full_name"]))
+            new_repositories_ids[repository["id"]] = new_id
+            new_id += 1
+
+    new_contributions = []
+    with open(contributions_file, "r") as contributions_data:
+        contributions = csv.DictReader(contributions_data, fieldnames=("user_id", "repository_id", "contributions"), delimiter=",")
+        print("Processing contributions...")
+        # Generating new contributions
+        for contribution in contributions:
+            new_contributions.append((new_user_ids[contribution["repository_id"]],
+                                     new_repositories_ids[contribution["user_id"]],
+                                     contribution["contributions"]))
+
+    # Writting new Gephi compliant files in destination_folder
+    print(os.getcwd())
+    with open(os.path.join(destination_folder, "nodes.csv"), "w") as node_file:
+        print("Writting new nodes...")
+        node_file.write("id,label,type\n")
+        for user in new_users:
+            node_file.write(str(user[0]) + "," + user[1] + ",user\n")
+        for repository in new_repositories:
+            node_file.write(str(repository[0]) + "," + repository[1] + ",repository\n")
+
+    with open(os.path.join(destination_folder, "edges.csv"), "w") as edge_file:
+        print("Writting new edges...")
+        edge_file.write("Source,Target,Weight\n")
+        for contribution in new_contributions:
+            edge_file.write(str(contribution[0]) + "," + str(contribution[1]) + "," + str(contribution[2]) + "\n")
+
+    print("All done!")
 
 

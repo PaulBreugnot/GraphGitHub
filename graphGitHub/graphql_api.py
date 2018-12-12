@@ -35,7 +35,7 @@ def fetch_data(github_user_name,
                                              data="{\"query\":"
                                                   "\"query listContributions {"
                                                     "rateLimit{cost remaining resetAt} "
-                                                    "search(query:\\\"created:>2008-04-10\\\", type:USER, first:"
+                                                    "search(query:\\\"type:user\\\", type:USER, first:"
                                                         + str(users_by_query) + ", after:\\\"" + lastCursor + "\\\"){"
                                                         "userCount pageInfo {endCursor} "
                                                         "edges{node{... on User{"
@@ -51,7 +51,7 @@ def fetch_data(github_user_name,
                                               data="{\"query\":"
                                                    "\"query listContributions {"
                                                    "rateLimit{cost remaining resetAt} "
-                                                   "search(query:\\\"created:>2008-04-10\\\", type:USER, first:"
+                                                   "search(query:\\\"type:user\\\", type:USER, first:"
                                                         + str(users_by_query) + "){"
                                                       "userCount pageInfo {endCursor} "
                                                       "edges{node{... on User{"
@@ -71,15 +71,19 @@ def fetch_data(github_user_name,
                         # else:
                         #     raise ValueError("None cursor!")
 
-                        if len(repos_json) > 0:
-                            for entry in repos_json["data"]["search"]["edges"]:
-                                raw_data.write(json.dumps(entry["node"]) + "\n")
-                                lastCursor = entry["cursor"]
-                                if lastCursor is not None:
-                                    cursors_file.write(lastCursor + "\n")
-                                else:
-                                    raise ValueError("None cursor!")
-                        fetched_users += users_by_query
+                        if len(repos_json["data"]["search"]["edges"]) == 0:
+                            raise ValueError("No more users!")
+
+                        for entry in repos_json["data"]["search"]["edges"]:
+                            raw_data.write(json.dumps(entry["node"]) + "\n")
+                            lastCursor = entry["cursor"]
+                            if lastCursor is not None:
+                                cursors_file.write(lastCursor + "\n")
+                            else:
+                                print("None cursor, end of pages.")
+                                raise ValueError("None cursor!")
+                        fetched_users += len(repos_json["data"]["search"]["edges"])
+
                         print(str(fetched_users) + " users fetched.")
                     else:
                         print("Request failed. error : " + str(users.status_code))
@@ -126,7 +130,7 @@ def graphql2csv(results_folder):
                 for data in graphql_data:
                     # User data
                     user_id = data["id"]
-                    users_file.write(str(user_id) + "," + str(data["name"] + "\n"))
+                    users_file.write(str(user_id) + "," + str(data["name"]) + "\n")
                     for repository in data["repositoriesContributedTo"]["nodes"]:
                         rep_id = repository["id"]
                         if rep_id not in registered_repositories:

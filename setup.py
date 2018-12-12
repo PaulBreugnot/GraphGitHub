@@ -9,5 +9,5 @@ setup(name='graphGitHub',
       packages=find_packages(exclude=['test']),
       package_data={'graphGitHub': ['graphql_query.txt']},
       long_description=open('README.md').read(),
-      install_requires=['requests']
+      install_requires=['requests', 'matplotlib']
       )
