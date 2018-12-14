@@ -4,6 +4,15 @@ import os
 
 
 def compute_distributions(edges_file, plot=True):
+    """
+    Computes number of repositories by users and numbers of contributors by repositories distributions.
+    You can plot them if plot is true, what could help to determine thresholds to clean data.
+
+    :param edges_file: a edges.csv file
+    :param plot: Plot results if true.
+    :return:    A size 2 tuple containing dictionaries that map users to their repositories count, and repositories to
+                their contributors count.
+    """
     with open(edges_file, "r") as edges:
         contributions = csv.DictReader(edges, delimiter=",")
         rep_by_users_counts = {}
@@ -54,6 +63,19 @@ def compute_distributions(edges_file, plot=True):
 
 
 def clean(nodes_file, edges_file, destination_folder, users_by_rep_treshold=10, rep_by_user_treshold=10):
+    """
+    Clean data removing all the users that have contributed to less than rep_by_user_treshold, and repositories with
+    less than users_by_rep_treshold. Also removes nodes that remain without connections after those steps.
+
+    Results are written as 2 .csv files in the specified destination_folder with the same format as the original format,
+    ready to be imported in Gephi!
+
+    :param nodes_file: Path of the origin nodes.csv file.
+    :param edges_file: Path of the origin edges.csv file.
+    :param destination_folder: Path of the destination folder.
+    :param users_by_rep_treshold: Minimum contributors by repository required.
+    :param rep_by_user_treshold: Minimum repositories by user required.
+    """
     nodes_to_delete = []
 
     users_by_rep_counts, rep_by_user_counts = compute_distributions(edges_file, plot=False)

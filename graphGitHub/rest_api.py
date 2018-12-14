@@ -11,6 +11,25 @@ def fetch_repositories(github_user_name,
                        begin_to_repo=0,
                        total_repositories=100,
                        results_folder="results"):
+    """
+    Fetch a total_repositories number of repositories, starting from begin_to_repo. Results are stored in a
+    rest/repositories.csv file in the specified results_folder.
+
+    If this file already exists, the new fetched results will be added at the end of the file such that it is possible
+    to perform several calls of this function to increase your dataset at any moment.
+
+    :param github_user_name: Your GitHub login.
+    :type github_user_name: String
+    :param oauth_password: Your GitHub oauth token.
+    :type oauth_password: String
+    :param begin_to_repo: Repository from which you want to start.
+    :type begin_to_repo: id
+    :param total_repositories: Number of repositories that you want to add.
+    :type total_repositories: int
+    :param results_folder: Path of the folder in which you want to store results.
+    :type results_folder: path-like object
+    """
+
     last_id = begin_to_repo
     fetched_repositories = 0
 
@@ -55,6 +74,11 @@ def fetch_repositories(github_user_name,
 
 
 def get_last_fetched_repository(results_folder):
+    """
+    Returns the last fetched repository reading the repositories.csv file contained in the rest/repositories.csv.
+    :param results_folder: Folder in which your results are stored.
+    """
+
     try:
         with open(os.path.join(results_folder, "rest", "repositories.csv")) as page_file:
             repositories = csv.DictReader(page_file, fieldnames=("id", "full_name"))
@@ -69,7 +93,7 @@ def get_last_fetched_repository(results_folder):
                 return None
 
     except FileNotFoundError as e:
-        print("graphql/page_cursor.txt doesn't seem to exist in the specified results_folder.")
+        print("rest/repositories.csv doesn't seem to exist in the specified results_folder.")
         raise
 
 
@@ -77,6 +101,24 @@ def fetch_data(github_user_name,
                oauth_password,
                begin_to_repo=0,
                results_folder="results"):
+    """
+    Fetch all data from the begin_to_repo repository contained in the rest/repositories.csv in the specified
+    results_folder, until the last repository of this file.
+
+    Two other files will be created :
+        - rest/contributions.csv
+        - rest/users.csv
+
+    :param github_user_name: Your GitHub login.
+    :type github_user_name: String
+    :param oauth_password: Your GitHub oauth token.
+    :type oauth_password: String
+    :param begin_to_repo:   Repository from which you want to start. (among those already fetched using
+                            fetch_repositories() )
+    :type begin_to_repo: id
+    :param results_folder: Path of the folder in which you store your results.
+    :type results_folder: path-like object
+    """
     try:
         csv_repositories = open(os.path.join(results_folder, "rest", "repositories.csv"), "r")
     except FileNotFoundError:
@@ -134,6 +176,13 @@ def fetch_data(github_user_name,
 
 
 def get_last_repository_data_fetched(results_folder):
+    """
+    Returns the last repository from which data as already been fetched, based on the content of the
+    rest/contributions.csv contained in the specified results_folder.
+    :param results_folder: Folder where you store your results.
+    :type results_folder: path-like object
+    """
+
     try:
         with open(os.path.join(results_folder, "rest", "contributions.csv")) as page_file:
             repositories = csv.DictReader(page_file, fieldnames=("id_folder", "id_user", "contributions"))
@@ -148,6 +197,16 @@ def get_last_repository_data_fetched(results_folder):
 
 
 def read_users(results_folder):
+    """
+    Returns the list of ids of the currently fetched users, reading the rest/users.csv file contained in the specified
+    results_folder.
+
+    :param results_folder: Folder where you store your results.
+    :type results_folder: path-like object
+    :return: list of user ids
+    :rtype: list of int
+    """
+
     user_ids = []
     try:
         with open(os.path.join(results_folder, "rest", "users.csv"), "r") as users_file:
@@ -162,8 +221,14 @@ def read_users(results_folder):
 
 def raw2gephi(user_file, repositories_file, contributions_file, destination_folder):
     """
+    Convert fetched data into Gephi compatible files.
+    Basically, from user_file, repositories_file and contributions_file, you will obtain two csv files, nodes.csv and
+    edges.csv that contains all the currently fetched data and that you can import directly in Gephi.
 
-    :return:
+    :param user_file: Path of the users.csv file.
+    :param repositories_file: Path of the repositories.csv file.
+    :param contributions_file: Path of the contributions.csv file.
+    :param destination_folder: Path of the folder in which you want to store results.
     """
 
     new_user_ids = {}

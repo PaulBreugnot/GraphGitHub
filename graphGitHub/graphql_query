@@ -1,4 +1,4 @@
-query listContributions {
+query listContributions ($after: String!){
  rateLimit{
   cost
   remaining

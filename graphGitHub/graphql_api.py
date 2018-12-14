@@ -9,10 +9,33 @@ entry_point = "https://api.github.com/graphql"
 def fetch_data(github_user_name,
                oauth_password,
                first_page_cursor=None,
-               total_node=100000,
+               total_node=1000,
                users_by_query=20,
                repositories_by_users=20,
                results_folder="results"):
+    """
+
+    Fetch data using the GitHub GraphQL API and store them in the file results_folder/graphql/data.json. The parameter
+    first_page_cursor allows you to append results to this file, that will be re-converted as a valid json file at the
+    end.
+    a page cursor history is kept in the file results_file/graphql/page_cursors.txt to allow you to start from the last
+    fetched page. You can also use get_last_fetched_page() to do so.
+
+    :param github_user_name: Your GitHub login.
+    :type github_user_name: String
+    :param oauth_password: Your GitHub oauth token.
+    :type oauth_password: String
+    :param first_page_cursor: Cursor of the last fetched page.
+    :type first_page_cursor: String
+    :param total_node: Number of node that you want to fetch. (can't be > 1000)
+    :type total_node: int
+    :param users_by_query: Number of users by GraphQL queries.
+    :type users_by_query: int
+    :param repositories_by_users: Number of repositories that will be fetched by users.
+    :type repositories_by_users: int
+    :param results_folder: Folder in which you want to store the resulting JSON.
+    :type results_folder: path-like object
+    """
 
     fetched_users = 0
 
@@ -33,10 +56,10 @@ def fetch_data(github_user_name,
                     if lastCursor is not None:
                         users = requests.post(entry_point,
                                              data="{\"query\":"
-                                                  "\"query listContributions {"
+                                                  "\"query listContributions ($after: String!) {"
                                                     "rateLimit{cost remaining resetAt} "
                                                     "search(query:\\\"type:user\\\", type:USER, first:"
-                                                        + str(users_by_query) + ", after:\\\"" + lastCursor + "\\\"){"
+                                                        + str(users_by_query) + ", after:$after){"
                                                         "userCount pageInfo {endCursor} "
                                                         "edges{node{... on User{"
                                                             "id name repositoriesContributedTo(includeUserRepositories:true  first:"
@@ -44,8 +67,23 @@ def fetch_data(github_user_name,
                                                                 "totalCount nodes{"
                                                                     "stargazers{totalCount}"
                                                                     "primaryLanguage{name}"
-                                                                    "id name}}}}cursor}}}\"}",
+                                                                    "id name}}}}cursor}}}\","
+                                                    "\"variables\":{\"after\":\"" + lastCursor + "\"}}",
                                              auth=(github_user_name, oauth_password))
+                        print("{\"query\":"
+                                                  "\"query listContributions ($after: String!) {"
+                                                    "rateLimit{cost remaining resetAt} "
+                                                    "search(query:\\\"type:user\\\", type:USER, first:"
+                                                        + str(users_by_query) + ", after:$after){"
+                                                        "userCount pageInfo {endCursor} "
+                                                        "edges{node{... on User{"
+                                                            "id name repositoriesContributedTo(includeUserRepositories:true  first:"
+                                                                + str(repositories_by_users) +" orderBy:{direction:DESC field:STARGAZERS}){"
+                                                                "totalCount nodes{"
+                                                                    "stargazers{totalCount}"
+                                                                    "primaryLanguage{name}"
+                                                                    "id name}}}}cursor}}}\","
+                                                    "\"variables\":\\\"" + lastCursor + "\\\"}")
                     else:
                         users = requests.post(entry_point,
                                               data="{\"query\":"
@@ -94,11 +132,12 @@ def fetch_data(github_user_name,
                     time.sleep(60)
 
     print("Convert raw file to json...")
-    raw2json(os.path.join(results_folder, "graphql", "graphql_data.txt"), os.path.join(results_folder, "graphql", "data.json"))
+    _raw2json(os.path.join(results_folder, "graphql", "graphql_data.txt"), os.path.join(results_folder, "graphql", "data.json"))
     print("All done!")
 
 
-def raw2json(source_file_path, destination_file_path):
+def _raw2json(source_file_path, destination_file_path):
+    # Converts the raw data file to a valid json file.
     with open(source_file_path, "r") as raw_data:
         with open(destination_file_path, "w+") as json_file:
             json_data = []
@@ -108,6 +147,15 @@ def raw2json(source_file_path, destination_file_path):
 
 
 def graphql2csv(results_folder):
+    """
+    Converts the graphql/data.json file contained in the specified results_folder to 3 .csv files contained in the same
+    folder :
+        - users.csv
+        - repositories.csv
+        -contributions.csv
+
+    :param results_folder: The folder where you store your results.
+    """
 
     registered_repositories = []
 
@@ -164,7 +212,14 @@ def graphql2csv(results_folder):
                       + str(contributions_count) + " contributions found.")
 
 
-def get_last_fetched_page(results_folder="results"):
+def get_last_fetched_page(results_folder):
+    """
+    Returns the cursor of the last fetched page, reading results_folder/graphql/page_cursors.txt.
+    :param results_folder: The folder where you store your results.
+    :return: Cursor of the last fetched page.
+    :rtype: String
+    """
+
     try:
         with open(os.path.join(results_folder, "graphql", "page_cursors.txt")) as page_file:
             pages = page_file.readlines()
