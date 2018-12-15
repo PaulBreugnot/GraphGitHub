@@ -34,7 +34,9 @@ All those results are stored in 3 .csv files, with the following fields :
   * id_repository
   * id_user
   * contributions <em>(number of contributions by this user to this repository)</em>
-  
+
+Those data (from REST, including cleaned data, and from GraphQL, are available in the [examples/datasets folder](https://github.com/PaulBreugnot/GraphGitHub/tree/master/examples).
+
 ### Gephi input
 
 However, Gephi can't really take those three <em>csv</em> as direct input,
