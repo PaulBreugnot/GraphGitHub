@@ -9,7 +9,7 @@ of GitHub using <a href="https://gephi.org/">Gephi</a>.
 ## Prerequisite
 
 I used <a href="https://github.com/PaulBreugnot/GraphGitHub">the Python package relative to this post</a>
-to exploit APIs, as described in <a href="part1.html">the first part</a>. (see [this example] (https://github.com/PaulBreugnot/GraphGitHub/blob/master/examples/rest_api_example.py))
+to exploit APIs, as described in <a href="part1.html">the first part</a>. (see [this example](https://github.com/PaulBreugnot/GraphGitHub/blob/master/examples/rest_api_example.py))
 
 But because Gephi mainly uses <em>csv</em> files has input,
 you are quite free to use the method of your choice if you want to
