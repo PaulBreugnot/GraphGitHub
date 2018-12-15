@@ -112,7 +112,7 @@ of contributions... -> <a href="https://dhh.dk/">https://dhh.dk/</a>
 
 <em>"I am the creator of Ruby On Rails"</em>
 
-Oh, really? Indeed, if we have a closer look at the repository cluster, we
+Oh, really?? :open_mouth: Indeed, if we have a closer look at the repository cluster, we
 can see that they are nearly all <a href="https://github.com/rails/rails">rails repository forks!</a>
 Also, <a href="https://github.com/jeremy">jeremy</a>
 , the other big node, is actually also a big rails contributor.
