@@ -12,7 +12,7 @@ on the world wide OpenSource community?
 
 Personally, I do. ;-) And we will try to discover it together.
 
-## Fetching data </h2>
+## Fetching data
 
 To be able to *analyze* GitHub data, we obviously need to
 *obtain* GitHub data first! Even if, as for most websites,
