@@ -135,5 +135,5 @@ curiosities) help to organize development strength around projects and
 users.
 
 So I am <strong>finally</strong> done with this article! Thanks for
-reading me, and do not hesitate to contribute or comment with some
+reading me, and do not hesitate to contribute or contact me if you have some
 ideas! :wink:
