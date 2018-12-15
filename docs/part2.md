@@ -77,7 +77,8 @@ connections after those operations.
 Actually that's quite arbitrary, but you are free to test different
 parameters to try different cleaning if you want. ;-) Distributions plots
 that I implemented can also help you. (see an example to plot distributions and clean data [just there](https://github.com/PaulBreugnot/GraphGitHub/blob/master/examples/data_cleaning_example.py)
-![Distribution plot example](distributions_example.png.png)
+
+![Distribution plot example](distributions_example.png)
 
 
 Anyway, I finally obtained 537 nodes for 2,023 connections, what is more
