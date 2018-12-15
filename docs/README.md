@@ -430,4 +430,4 @@ before.
 However, I was still able to use it to do quite an interesting analysis
 plotting graphs using Gephi, and there could potentially be a lot of
 applications...
-But we'll see it in the [next part of this post]("part2.md") !
+But we'll see it in the [next part of this post](part2.md) !
