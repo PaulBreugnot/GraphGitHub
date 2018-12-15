@@ -10,7 +10,7 @@ GitHub, or what was the *most famous* projects available
 on the platform, or which users and projects have the biggest influence
 on the world wide OpenSource community?
 
-Personally, I do. ;-) And we will try to discover it together.
+Personally, I do. :wink: And we will try to discover it together.
 
 ## Fetching data
 
@@ -57,7 +57,7 @@ and users graph.
 Browsing the [repositories API documentation](https://developer.github.com/v3/repos/)
 , you will quickly discover that there is an entry to
 <a href="https://developer.github.com/v3/repos/#list-all-public-repositories">list all public repositories</a>!
-Wonderful, huh?
+Wonderful, huh? :smirk:
 
 So, let's try this. Event if you can perform GET requests using your
           navigator, personally I prefer using softwares such as
