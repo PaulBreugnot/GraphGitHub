@@ -136,4 +136,4 @@ users.
 
 So I am <strong>finally</strong> done with this article! Thanks for
 reading me, and do not hesitate to contribute or comment with some
-ideas! ;-)
+ideas! :wink:
